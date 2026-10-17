@@ -80,7 +80,7 @@ TERM_HINTS = re.compile(
 )
 
 
-def fetch_thread(repo: str, number: int, since: str | None) -> dict:
+def fetch_thread(repo: str, number: int, since: str | None, exclude: str | None = None) -> dict:
     """用 gh 拉 issue/PR 线程（评论按时间排序，可按 since 过滤）。"""
     j = subprocess.run(
         ["gh", "issue", "view", str(number), "-R", repo, "--json", "title,body,state,url,comments"],
@@ -99,6 +99,8 @@ def fetch_thread(repo: str, number: int, since: str | None) -> dict:
     for c in data.get("comments", []):
         ts = c.get("createdAt") or ""
         if since and ts and ts < since:
+            continue
+        if exclude and (c.get("author") or {}).get("login") == exclude:
             continue
         comments.append({"author": (c.get("author") or {}).get("login", "?"), "at": ts, "body": c.get("body") or ""})
     return {"title": data.get("title", ""), "body": data.get("body") or "", "state": data.get("state", ""),
@@ -168,6 +170,7 @@ def main(argv=None) -> int:
     ap.add_argument("--number", required=True, type=int, help="issue 或 PR 编号")
     ap.add_argument("--since", default=None, help="只取此时间之后的评论（ISO，如 2026-10-14）")
     ap.add_argument("--skip-op", action="store_true", help="不翻译 issue/PR 正文，只看评论（配合 --since 用）")
+    ap.add_argument("--exclude-author", default=None, help="跳过某个作者的评论（如你自己的账号），避免把自己的回帖算进\"新回复\"")
     ap.add_argument("--out", default="oss-translate-out", help="产物目录")
     ap.add_argument("--glossary", default=None, help="术语库 JSON")
     ap.add_argument("--translation", default=None, help="主译文文本（按空行切段，与原文段落对齐）")
@@ -183,7 +186,7 @@ def main(argv=None) -> int:
         except Exception as e:
             print(f"术语库解析失败，忽略：{e}", file=sys.stderr)
 
-    thread = fetch_thread(a.repo, a.number, a.since)
+    thread = fetch_thread(a.repo, a.number, a.since, a.exclude_author)
     zh1 = split_translation(open(a.translation, encoding="utf-8").read()) if a.translation else []
     zh2 = split_translation(open(a.translation2, encoding="utf-8").read()) if a.translation2 else []
 
@@ -248,11 +251,12 @@ def main(argv=None) -> int:
              "", f"— drafted by oss-review-translate for {a.repo}#{a.number}"]
     open(os.path.join(a.out, "confirm.md"), "w", encoding="utf-8").write("\n".join(conf) + "\n")
 
-    who = a.author or os.environ.get("USERNAME") or os.environ.get("USER") or ""
+    # 隐私：默认**不**写本机用户名（它是可识别信息）；需要追责就显式 --author
+    who = a.author or ""
     rec = {"ts": datetime.now(timezone.utc).isoformat(timespec="seconds"), "tool": "oss-review-translate", "repo": a.repo,
            "number": a.number, "since": a.since, "paragraphs": idx, "flags": total_flags,
            "translations_used": int(bool(a.translation)) + int(bool(a.translation2)),
-           "glossary_terms": len(glossary), "by": who}
+           "glossary_terms": len(glossary), "by": who or "unspecified"}
     with open(os.path.join(a.out, "audit.jsonl"), "a", encoding="utf-8") as fh:
         fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
