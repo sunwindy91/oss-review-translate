@@ -1,5 +1,7 @@
 # oss-review-translate · 审阅级双语保真
 
+[![test](https://github.com/sunwindy91/oss-review-translate/actions/workflows/test.yml/badge.svg)](https://github.com/sunwindy91/oss-review-translate/actions/workflows/test.yml)
+
 > 面向"**非母语者在开源协作里读英文 review**"的工具。**它不是翻译器**——它保证的是
 > **读得准、能核对、可回帖确认、留得下审计**。
 
