@@ -80,6 +80,38 @@ TERM_HINTS = re.compile(
 )
 
 
+def fetch_thread_raw(repo: str, number: int) -> dict:
+    """拉原始线程（gh --json 形态，不做过滤）。"""
+    j = subprocess.run(
+        ["gh", "issue", "view", str(number), "-R", repo, "--json", "title,body,state,url,comments"],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    if j.returncode != 0:
+        j = subprocess.run(
+            ["gh", "pr", "view", str(number), "-R", repo, "--json", "title,body,state,url,comments"],
+            capture_output=True, text=True, encoding="utf-8",
+        )
+    if j.returncode != 0:
+        raise SystemExit("gh 拉取失败：" + (j.stderr or j.stdout)[:300])
+    return json.loads(j.stdout)
+
+
+def normalize_thread(data: dict, since: str | None = None, exclude: str | None = None) -> dict:
+    """把线程规整成统一形态并做过滤（兼容 gh 形态与更宽松的扁平形态）。"""
+    comments = []
+    for c in data.get("comments", []):
+        author = c.get("author")
+        login = author.get("login", "?") if isinstance(author, dict) else (author or "?")
+        ts = c.get("createdAt") or c.get("created_at") or ""
+        if since and ts and ts < since:
+            continue
+        if exclude and login == exclude:
+            continue
+        comments.append({"author": login, "at": ts, "body": c.get("body") or ""})
+    return {"title": data.get("title", ""), "body": data.get("body") or "",
+            "state": data.get("state", ""), "url": data.get("url", ""), "comments": comments}
+
+
 def fetch_thread(repo: str, number: int, since: str | None, exclude: str | None = None) -> dict:
     """用 gh 拉 issue/PR 线程（评论按时间排序，可按 since 过滤）。"""
     j = subprocess.run(
@@ -166,8 +198,10 @@ def split_translation(zh_text: str) -> list[str]:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="开源协作的审阅级双语保真工具（不翻译，只保真）")
-    ap.add_argument("--repo", required=True, help="owner/name")
-    ap.add_argument("--number", required=True, type=int, help="issue 或 PR 编号")
+    ap.add_argument("--repo", default="", help="owner/name（用 --from-json 时可省略）")
+    ap.add_argument("--number", default=0, type=int, help="issue 或 PR 编号（用 --from-json 时可省略）")
+    ap.add_argument("--from-json", default=None, help="从本地 JSON 读取线程（离线/存档/可复现）")
+    ap.add_argument("--save-json", default=None, help="把读到的线程原样存为 JSON（审计可复现）")
     ap.add_argument("--since", default=None, help="只取此时间之后的评论（ISO，如 2026-10-14）")
     ap.add_argument("--skip-op", action="store_true", help="不翻译 issue/PR 正文，只看评论（配合 --since 用）")
     ap.add_argument("--exclude-author", default=None, help="跳过某个作者的评论（如你自己的账号），避免把自己的回帖算进\"新回复\"")
@@ -186,7 +220,21 @@ def main(argv=None) -> int:
         except Exception as e:
             print(f"术语库解析失败，忽略：{e}", file=sys.stderr)
 
-    thread = fetch_thread(a.repo, a.number, a.since, a.exclude_author)
+    if a.from_json:
+        raw = json.loads(open(a.from_json, encoding="utf-8").read())
+    else:
+        if not a.repo or not a.number:
+            raise SystemExit("需要 --repo 与 --number（或用 --from-json）")
+        raw = fetch_thread_raw(a.repo, a.number)
+        if a.save_json:
+            with open(a.save_json, "w", encoding="utf-8") as fh:
+                json.dump(raw, fh, ensure_ascii=False, indent=2)
+    thread = normalize_thread(raw, a.since, a.exclude_author)
+    if not a.repo and thread.get("url"):
+        # 从 URL 反推 owner/name#number，让 --from-json 也能产出完整审计
+        m = re.search(r"github\.com/([^/]+/[^/]+)/(?:issues|pull)/(\d+)", thread["url"])
+        if m:
+            a.repo, a.number = m.group(1), int(m.group(2))
     zh1 = split_translation(open(a.translation, encoding="utf-8").read()) if a.translation else []
     zh2 = split_translation(open(a.translation2, encoding="utf-8").read()) if a.translation2 else []
 

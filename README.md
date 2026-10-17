@@ -41,6 +41,26 @@ python oss-review-translate.py ... --glossary path/to/glossary.json
 3. **校验**：高风险段落（义务强度/否定/数字/未入库术语）**逐条回原文确认**；有第二份译文就比对
 4. **回帖**：用 `confirm.md` 先问"我理解对了吗"，**再**写实质回复；把审计行留在 `audit.jsonl`
 
+
+## 离线与复现（`--save-json` / `--from-json`）
+
+```bash
+# 把"你当时读到的线程"存档 → 审计可复现（对方事后编辑/删除也能对照）
+python oss-review-translate.py --repo a2aproject/A2A --number 2250 --save-json thread.json --out out/
+
+# 之后可离线重跑同一份快照（同一输入 → 同一输出），不依赖网络
+python oss-review-translate.py --from-json thread.json --since 2026-10-14 --skip-op --out out2/
+```
+
+## 测试
+
+```bash
+python tests/test_flags.py   # 风险标记的单元断言（零依赖）
+python tests/test_all.py     # 端到端、离线回放（不联网、不需要 gh）
+```
+
+CI：`.github/workflows/test.yml`（push / PR 时自动跑上面两个）。
+
 ## 诚实边界
 
 - **它不翻译**。译文由你（或任何机翻）提供；工具负责"保真与可核对"。
