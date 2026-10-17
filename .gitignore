@@ -1,0 +1,6 @@
+demo/
+demo2/
+out/
+oss-translate-out/
+__pycache__/
+*.pyc

@@ -1,0 +1,86 @@
+{
+  "sanction": {
+    "zh": "批准（人类对不可逆动作的授权）",
+    "note": "本提案里指'具名人管家对某一次不可逆动作的批准'，不是'制裁'。机翻常误译为'制裁'"
+  },
+  "sanctioned": {
+    "zh": "已获批准的",
+    "note": "被动形态，指该动作已有批准"
+  },
+  "allowance": {
+    "zh": "额度（可用的次数预算）",
+    "note": "single-use allowance = 单次额度；与 validUntil（时间窗）是两个维度"
+  },
+  "admission": {
+    "zh": "受理",
+    "note": "dispatch admission = 派发受理时点；关键在'受理即占额'"
+  },
+  "admitted": {
+    "zh": "已受理",
+    "note": "与 confirmed（已确认效果）区分"
+  },
+  "dispatch": {
+    "zh": "派发",
+    "note": "与 effect（效果）区分：派发=送出请求，效果=下游真的发生了"
+  },
+  "effect": {
+    "zh": "效果（下游实际发生的结果）",
+    "note": "effect confirmed / unknown 是观测状态，不是批准状态"
+  },
+  "steward": {
+    "zh": "管家（具名的人类责任人）",
+    "note": "steward 必须是自然人（standalone spec 定义）"
+  },
+  "receipt": {
+    "zh": "收据（防篡改的经过记录）",
+    "note": "append-only + prevReceipt 链；不是'收条'的泛化"
+  },
+  "outcome": {
+    "zh": "结局／结果状态",
+    "note": "词表：pending / refused / lapsed / open —— 刻意与 A2A 核心任务状态区分"
+  },
+  "lapsed": {
+    "zh": "空耗失效",
+    "note": "指时间窗过去了但没被使用；不是'过期'的泛化"
+  },
+  "supersedes": {
+    "zh": "替代（追加一条新的来覆盖旧的）",
+    "note": "不是'撤销'：历史保留，只追加替代记录"
+  },
+  "withdrawal": {
+    "zh": "撤回（人主动收回已报告的决定）",
+    "note": "必须与'机制失效'区分：二者补救方式不同"
+  },
+  "conformance": {
+    "zh": "一致性（是否符合规范）",
+    "note": "conformance test = 一致性测试；不是'合规'（compliance）"
+  },
+  "test oracle": {
+    "zh": "测试判定基准",
+    "note": "判断一次运行是否通过的客观依据；不是'预言机'"
+  },
+  "binding": {
+    "zh": "约束性规范文本",
+    "note": "本提案把自己叫 binding（有约束力的那部分），与 commentary 区分"
+  },
+  "class basis": {
+    "zh": "类别判定依据",
+    "note": "评审意见：不能只是规则标签，必须能对着实际动作与参数复核"
+  },
+  "reversibility": {
+    "zh": "可逆性",
+    "note": "R0–R3 分级；无规则匹配时默认 R2 且不执行"
+  },
+  "idempotency": {
+    "zh": "幂等性",
+    "note": "下游重复执行不产生额外效果；与'恰好一次'不同"
+  },
+  "mandatory": {
+    "zh": "强制性的",
+    "note": "与 recommended / optional 区分"
+  },
+  "hold off": {
+    "zh": "暂缓（先不要做）",
+    "note": "不是'拒绝'：礼貌地要求延后"
+  }
+}
