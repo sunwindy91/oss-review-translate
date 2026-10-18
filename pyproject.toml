@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oss-review-translate"
+version = "0.2.0"
+description = "Review-grade bilingual fidelity for OSS: paragraph-aligned EN/ZH, glossary lock, obligation-strength & negation flags, confirmation draft, reply scaffold, audit line. Not a translator."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "sunwindy91" }]
+keywords = ["oss", "code-review", "translation", "bilingual", "glossary", "conformance"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.urls]
+Homepage = "https://github.com/sunwindy91/oss-review-translate"
+Issues = "https://github.com/sunwindy91/oss-review-translate/issues"
+
+[project.scripts]
+oss-review-translate = "oss_review_translate:main"
+
+[tool.setuptools]
+py-modules = []

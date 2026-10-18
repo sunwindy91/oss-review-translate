@@ -161,32 +161,51 @@ def paragraphs(text: str):
     return [p for p in out if p.strip()]
 
 
-def flags_of(para: str, glossary: dict) -> list[str]:
-    f = []
-    modals = []
+VERSION = "0.2.0"
+
+
+def flags_of(para: str, glossary: dict):
+    """返回 [(level, text)]，level ∈ high / medium / low。
+
+    分级的意义（第一性原理）：**只有会改变含义的标记才值得占用注意力**。
+    实测：9 段规范文本原样会产出 28 条标记 —— 那等于没有标记。
+      high   强制/禁止语气（MUST / MUST NOT / SHALL / SHALL NOT）；否定 ≥2 处
+      medium 建议/允许语气（should / may / can）；数字与计数；代码字段与 §引用；未入术语库
+      low    单个否定；其他
+    """
+    out = []
+    strong = []
     for pat, label in MODAL_PATTERNS:
         for m in re.finditer(pat, para):
-            modals.append((m.start(), label, m.group(0)))
-    if modals:
-        modals.sort()
-        f.append("义务强度：" + " / ".join(f"{lab}({txt})" for _, lab, txt in modals))
+            strong.append((m.start(), label, m.group(0)))
+    strong.sort()
+    musts = [(lab, txt) for _, lab, txt in strong if lab.startswith("强制") or lab.startswith("禁止")]
+    softs = [(lab, txt) for _, lab, txt in strong if not (lab.startswith("强制") or lab.startswith("禁止"))]
+    if musts:
+        out.append(("high", "强制/禁止语气：" + " / ".join(f"{lab}({txt})" for lab, txt in musts)
+                    + " —— 中文必须对应为 必须/不得，不可降级为『应当/可以』"))
+    if softs:
+        out.append(("medium", "建议/允许语气：" + " / ".join(f"{lab}({txt})" for lab, txt in softs)))
     negs = len(NEGATION.findall(para))
     if negs >= 2:
-        f.append(f"否定词 {negs} 处：位置与作用域易被机翻搬动")
+        out.append(("high", f"否定词 {negs} 处 —— 作用域易被机翻搬动（not A and B ≠ not (A and B)）"))
+    elif negs == 1:
+        out.append(("low", "否定词 1 处"))
     nums = NUMBERS.findall(para)
     if nums:
-        f.append("数字/计数：" + "、".join(sorted(set(nums)))[:60] + "（必须逐字核对）")
+        lvl = "high" if musts else "medium"
+        out.append((lvl, "数字/计数：" + "、".join(sorted(set(nums)))[:60] + "（逐字核对）"))
     spans = CODE_SPAN.findall(para)
     if spans:
-        f.append("代码/字段名（必须原样保留）：" + "、".join(spans[:6]))
+        out.append(("medium", "代码/字段名（原样保留）：" + "、".join(spans[:6])))
     refs = SPEC_REF.findall(para)
     if refs:
-        f.append("规范引用：" + "、".join(sorted(set(refs)))[:60])
+        out.append(("medium", "规范引用：" + "、".join(sorted(set(refs)))[:60]))
     hinted = sorted({m.group(0).lower() for m in TERM_HINTS.finditer(para)})
     missing = [t for t in hinted if t not in {k.lower() for k in glossary}]
     if missing:
-        f.append("未入术语库（译法可能漂移）：" + "、".join(missing[:8]))
-    return f
+        out.append(("medium", "未入术语库（译法可能漂移）：" + "、".join(missing[:8])))
+    return out
 
 
 def split_translation(zh_text: str) -> list[str]:
@@ -201,6 +220,9 @@ def main(argv=None) -> int:
     ap.add_argument("--repo", default="", help="owner/name（用 --from-json 时可省略）")
     ap.add_argument("--number", default=0, type=int, help="issue 或 PR 编号（用 --from-json 时可省略）")
     ap.add_argument("--from-json", default=None, help="从本地 JSON 读取线程（离线/存档/可复现）")
+    ap.add_argument("--all-flags", action="store_true", help="显示全部风险（默认只显示 high 级）")
+    ap.add_argument("--format", default="md", choices=["md", "json"], help="md（默认）或 json（给自动化/飞书用）")
+    ap.add_argument("--version", action="version", version="oss-review-translate " + VERSION)
     ap.add_argument("--save-json", default=None, help="把读到的线程原样存为 JSON（审计可复现）")
     ap.add_argument("--since", default=None, help="只取此时间之后的评论（ISO，如 2026-10-14）")
     ap.add_argument("--skip-op", action="store_true", help="不翻译 issue/PR 正文，只看评论（配合 --since 用）")
@@ -254,6 +276,7 @@ def main(argv=None) -> int:
                 continue
             fl = flags_of(p, glossary)
             total_flags += len(fl)
+            shown = fl if a.all_flags else [f for f in fl if f[0] == "high"]
             if fl:
                 risky.append((tag, p, fl))
             t1 = zh1[idx - 1] if idx - 1 < len(zh1) else ""
@@ -263,20 +286,29 @@ def main(argv=None) -> int:
             if a.translation2:
                 disagree = (t1.strip() != t2.strip()) if (t1 or t2) else False
                 block += [f"**ZH₂（第二份译文）**" + ("  ⚠️ 与主译文不同" if disagree else "（一致）"), "", t2 or "（待填）", ""]
-            if fl:
-                block += ["**⚠️ 风险标记**"] + [f"- {x}" for x in fl] + [""]
+            if shown:
+                block += ["**⚠️ 风险标记**"] + [f"- [{lvl}] {txt}" for lvl, txt in shown] + [""]
+                hidden = len(fl) - len(shown)
+                if hidden:
+                    block += [f"*（另有 {hidden} 条中/低风险，--all-flags 查看）*", ""]
+            elif fl and a.all_flags is False:
+                block += [f"*（{len(fl)} 条中/低风险已隐藏，--all-flags 查看）*", ""]
             for m in TERM_HINTS.finditer(p):
                 w = m.group(0).lower()
                 terms[w] = terms.get(w, 0) + 1
             lines.append("\n".join(block))
 
+    high_n = sum(1 for _, _, fl in risky for lvl, _ in fl if lvl == "high")
+    mid_n = sum(1 for _, _, fl in risky for lvl, _ in fl if lvl == "medium")
+    low_n = sum(1 for _, _, fl in risky for lvl, _ in fl if lvl == "low")
+    head = (f"# {thread['title']}\n\n{thread['url']} · {thread['state']} · 抽取 "
+            f"{datetime.now(timezone.utc).isoformat(timespec='seconds')}\n\n"
+            f"> 段落 {idx} · **高风险 {high_n}** · 中 {mid_n} · 低 {low_n}"
+            + ("　（默认只显示高风险，`--all-flags` 看全部）" if not a.all_flags else "") + "\n")
     if zh1 and len(zh1) != idx:
         lines.insert(0, f"> ⚠️ 段落数不匹配：原文 {idx} 段，译文 {len(zh1)} 段——逐段核对前请先手工对齐\n")
 
-    open(os.path.join(a.out, "bilingual.md"), "w", encoding="utf-8").write(
-        f"# {thread['title']}\n\n{thread['url']} · {thread['state']} · 抽取时间 {datetime.now(timezone.utc).isoformat(timespec='seconds')}\n"
-        + "\n".join(lines)
-    )
+    open(os.path.join(a.out, "bilingual.md"), "w", encoding="utf-8").write(head + "\n".join(lines))
 
     # 术语表候选
     g = sorted(terms.items(), key=lambda kv: -kv[1])
@@ -293,13 +325,38 @@ def main(argv=None) -> int:
     for tag, p, fl in risky[:8]:
         quote = " ".join(p.split())[:220]
         conf.append(f"- **[{tag}]** You wrote: \"{quote}…\" — my understanding: _(fill in one sentence)_")
-        conf.append(f"  - _checks_: {'; '.join(fl)}")
+        checks = [txt for lvl, txt in fl if lvl == "high"]
+        if checks:
+            conf.append(f"  - _must verify_: {'; '.join(checks)}")
     conf += ["", "If any of the above is a misreading, please say so and I will re-read the thread; "
              "I would rather correct my understanding now than reply on a wrong reading.",
              "", f"— drafted by oss-review-translate for {a.repo}#{a.number}"]
     open(os.path.join(a.out, "confirm.md"), "w", encoding="utf-8").write("\n".join(conf) + "\n")
 
     # 隐私：默认**不**写本机用户名（它是可识别信息）；需要追责就显式 --author
+    # 回复脚手架：把"读"接到"写"——带段落锚点，避免凭印象回帖
+    reply = ["# 回复脚手架（先确认，再回复；每条都带段落编号可回指）", "",
+             "## 一、需要先向对方确认的点（高风险）", ""]
+    for tag, p, fl in risky:
+        if any(lvl == "high" for lvl, _ in fl):
+            reply.append(f"- [{tag}] 我的理解：____　需要对方确认：____")
+    reply += ["", "## 二、逐段回应", ""]
+    for tag, p, fl in risky:
+        first = " ".join(p.split())[:90]
+        reply.append(f"- [{tag}]（原文：{first}…）→ 我的回应：____")
+    reply += ["", "## 三、回帖前自查", "- [ ] 每个高风险段落都写了『我的理解』",
+              "- [ ] 术语译法与术语库一致", "- [ ] 没有一句是只凭译文写的（都能指回段落编号）"]
+    open(os.path.join(a.out, "reply.md"), "w", encoding="utf-8").write("\n".join(reply) + "\n")
+
+    if a.format == "json":
+        payload = {"tool": "oss-review-translate", "version": VERSION, "repo": a.repo, "number": a.number,
+                   "url": thread["url"], "title": thread["title"], "paragraphs": [
+                       {"tag": tag, "en": p, "flags": [{"level": l, "text": t} for l, t in fl]}
+                       for tag, p, fl in risky],
+                   "counts": {"high": high_n, "medium": mid_n, "low": low_n}}
+        with open(os.path.join(a.out, "summary.json"), "w", encoding="utf-8") as fh:
+            json.dump(payload, fh, ensure_ascii=False, indent=2)
+
     who = a.author or ""
     rec = {"ts": datetime.now(timezone.utc).isoformat(timespec="seconds"), "tool": "oss-review-translate", "repo": a.repo,
            "number": a.number, "since": a.since, "paragraphs": idx, "flags": total_flags,
@@ -308,8 +365,9 @@ def main(argv=None) -> int:
     with open(os.path.join(a.out, "audit.jsonl"), "a", encoding="utf-8") as fh:
         fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
-    print(f"段落 {idx} 个 · 风险标记 {total_flags} 处 · 术语候选 {len(g)} 个 → {a.out}/")
-    print("  产物：bilingual.md / terms.md / confirm.md / audit.jsonl")
+    print(f"段落 {idx} 个 · 风险 high {high_n} / mid {mid_n} / low {low_n} · 术语候选 {len(g)} 个 → {a.out}/")
+    print("  产物：bilingual.md / terms.md / confirm.md / reply.md / audit.jsonl"
+          + (" / summary.json" if a.format == "json" else ""))
     return 0
 
 

@@ -19,6 +19,24 @@
 | 多源校验 | 单一机翻没有交叉验证 | `--translation2` 提供第二份译文，**逐段比对并标出分歧** |
 | 审计 | 事后无法回答"你当时依据什么理解的" | `audit.jsonl` 一行记录：哪版、几段、多少风险、用了几份译文 |
 
+
+## 产物与分级（0.2.0）
+
+| 文件 | 内容 |
+|---|---|
+| `bilingual.md` | 逐段对照 + **分级**风险标记（默认只显示 high；`--all-flags` 看全部） |
+| `terms.md` | 术语候选 + 术语库命中 |
+| `confirm.md` | 英文确认稿（只引用 high 级段落） |
+| **`reply.md`** | **回复脚手架**：先写"我的理解/需要确认"，再逐段回应，附回帖前自查 |
+| `audit.jsonl` | 一行审计（段落数/分级计数/用了几份译文/谁读的） |
+| `summary.json` | `--format json` 时产出，供自动化/飞书卡片接入 |
+
+```bash
+python oss-review-translate.py ... --all-flags      # 看全部风险
+python oss-review-translate.py ... --format json    # 额外产出 summary.json
+python oss-review-translate.py --version
+```
+
 ## 用法
 
 ```bash
