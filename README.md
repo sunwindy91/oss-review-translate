@@ -2,6 +2,9 @@
 
 > English: [README.en.md](README.en.md)
 
+> **为什么需要它 / 它和已有项目的关系**：[docs/position.md](docs/position.md)（一页纸，欢迎反驳）
+
+
 [![test](https://github.com/sunwindy91/oss-review-translate/actions/workflows/test.yml/badge.svg)](https://github.com/sunwindy91/oss-review-translate/actions/workflows/test.yml)
 
 > 面向"**非母语者在开源协作里读英文 review**"的工具。**它不是翻译器**——它保证的是
