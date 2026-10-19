@@ -163,6 +163,9 @@ def main():
         card = json.loads(io_open(card_path))
         check(card["msg_type"] == "interactive", "卡片应为 interactive")
         check("P01" in json.dumps(card, ensure_ascii=False), "卡片应含高风险段落编号")
+        # v0.2.2：卡片段落总数必须与 summary 的 total_paragraphs 一致（无该字段时回退到段落数）
+        card_text = json.dumps(card, ensure_ascii=False)
+        check("段落 1" in card_text, "卡片应显示段落总数（回退到 paragraphs 长度）")
 
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

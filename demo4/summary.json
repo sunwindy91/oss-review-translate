@@ -1,0 +1,251 @@
+{
+  "tool": "oss-review-translate",
+  "version": "0.2.1",
+  "repo": "a2aproject/A2A",
+  "number": 2250,
+  "url": "https://github.com/a2aproject/A2A/issues/2250",
+  "title": "[Extension Proposal] Sanction Gate — bounded human authorisation for irreversible actions",
+  "paragraphs": [
+    {
+      "tag": "P01",
+      "en": "Thanks @sunwindy91 and @gomission for the careful, concrete feedback. I would be glad to collaborate on turning these cases into clearer requirements and test vectors. As in my earlier reply, what follows are proposed clarifications for a future revision of the binding, not changes to the published text or validated behaviour. There is no reference implementation, and I can't commit to a revision timeline.",
+      "flags": [
+        {
+          "level": "medium",
+          "text": "建议/允许语气：能力（can）(can)"
+        },
+        {
+          "level": "high",
+          "text": "否定词 2 处 —— 作用域易被机翻搬动（not A and B ≠ not (A and B)）"
+        }
+      ]
+    },
+    {
+      "tag": "P02",
+      "en": "**Cardinality (@sunwindy91).** You're right: this is a real gap in the published text. The binding has per-sanction `validUntil`, an `effectNotBefore` delay, and `lapsed` for a window that elapses unused, but it does not say whether one admission authorises one crossing or many. The emergency path (§10) is the only place with an explicit budget. Proposed clarification: a sanction remains bound to one exact `proposalHash`, and its admission authorises a single dispatch unless an explicit use budget is specified. A validity window bounds time; it does not grant additional uses. The allowance must be durably claimed before dispatch, rather than consumed only when an effect is confirmed.",
+      "flags": [
+        {
+          "level": "high",
+          "text": "否定词 2 处 —— 作用域易被机翻搬动（not A and B ≠ not (A and B)）"
+        },
+        {
+          "level": "medium",
+          "text": "数字/计数：、one、single（逐字核对）"
+        },
+        {
+          "level": "medium",
+          "text": "代码/字段名（原样保留）：validUntil、effectNotBefore、lapsed、proposalHash"
+        },
+        {
+          "level": "medium",
+          "text": "规范引用：§10"
+        },
+        {
+          "level": "medium",
+          "text": "未入术语库（译法可能漂移）：claimed"
+        }
+      ]
+    },
+    {
+      "tag": "P03",
+      "en": "**Unknown outcome after dispatch (@gomission).** Agreed: “admitted / allowance spent” and “effect confirmed / unknown” are separate facts. Your five-step vector makes the distinction concrete: persist admission and claim the allowance; dispatch once; lose the acknowledgement or outcome record; restart and request the same action; observe **no second dispatch**, with the allowance still spent and the original outcome unresolved.",
+      "flags": [
+        {
+          "level": "low",
+          "text": "否定词 1 处"
+        },
+        {
+          "level": "medium",
+          "text": "数字/计数：once、second（逐字核对）"
+        },
+        {
+          "level": "medium",
+          "text": "未入术语库（译法可能漂移）：claim、spent"
+        }
+      ]
+    },
+    {
+      "tag": "P04",
+      "en": "The receipt example already includes separate `dispatchedAt` and `effectAt` fields (§6.2), but the text still needs explicit allowance and recovery semantics. Proposed: uncertainty after dispatch MUST NOT restore the allowance and MUST NOT rewrite the gate outcome as `refused` or `open`; reconcile the original attempt before any new decision. Multiple workers would need a shared atomic claim. That does not establish exactly-once downstream effects: downstream idempotency or reconciliation remains a separate requirement. I am treating your scenario as a proposed test vector, not as evidence of A2A/Sanction Gate conformance.",
+      "flags": [
+        {
+          "level": "high",
+          "text": "强制/禁止语气：强制（MUST）(MUST) / 禁止（MUST NOT）(MUST NOT) / 强制（MUST）(MUST) / 禁止（MUST NOT）(MUST NOT) —— 中文必须对应为 必须/不得，不可降级为『应当/可以』"
+        },
+        {
+          "level": "high",
+          "text": "否定词 4 处 —— 作用域易被机翻搬动（not A and B ≠ not (A and B)）"
+        },
+        {
+          "level": "high",
+          "text": "数字/计数：、exactly、once（逐字核对）"
+        },
+        {
+          "level": "medium",
+          "text": "代码/字段名（原样保留）：dispatchedAt、effectAt、refused、open"
+        },
+        {
+          "level": "medium",
+          "text": "规范引用：§6.2"
+        },
+        {
+          "level": "medium",
+          "text": "未入术语库（译法可能漂移）：claim、reconcile、reconciliation、recovery"
+        }
+      ]
+    },
+    {
+      "tag": "P05",
+      "en": "**Withdrawal versus mechanism failure (@sunwindy91).** Today `open` with `supersedes` records that a reported decision was withdrawn, without saying why. A human withdrawing a decision and a mechanism failing to enforce one require different remediation. A superseding correction must distinguish those reasons and preserve the original history; it must not imply that a human withdrew when the gate was actually absent from the execution path. That enforcement failure also needs to remain visible as a failure, not be disguised as a steward decision.",
+      "flags": [
+        {
+          "level": "high",
+          "text": "否定词 3 处 —— 作用域易被机翻搬动（not A and B ≠ not (A and B)）"
+        },
+        {
+          "level": "medium",
+          "text": "数字/计数：one（逐字核对）"
+        },
+        {
+          "level": "medium",
+          "text": "代码/字段名（原样保留）：open、supersedes"
+        },
+        {
+          "level": "medium",
+          "text": "未入术语库（译法可能漂移）：withdrawn"
+        }
+      ]
+    },
+    {
+      "tag": "P06",
+      "en": "**Independently checkable class basis.** The binding already treats a peer's `class` as an untrusted claim and resolves ambiguity upward (§10), but the examples' `classBasis` is just a rule label. Proposed: the classification should be recheckable against the actual action and arguments, linked to the sanctioned proposal and the applicable classification rule. A hash can bind that evidence, but a hash alone cannot let a reviewer inspect it; the underlying evidence must be available to the authorised reviewer. Your evasion and content-only false-positive cases would be useful paired vectors.",
+      "flags": [
+        {
+          "level": "medium",
+          "text": "建议/允许语气：建议（should）(should) / 能力（can）(can)"
+        },
+        {
+          "level": "low",
+          "text": "否定词 1 处"
+        },
+        {
+          "level": "medium",
+          "text": "数字/计数：（逐字核对）"
+        },
+        {
+          "level": "medium",
+          "text": "代码/字段名（原样保留）：class、classBasis"
+        },
+        {
+          "level": "medium",
+          "text": "规范引用：§10"
+        },
+        {
+          "level": "medium",
+          "text": "未入术语库（译法可能漂移）：claim"
+        }
+      ]
+    },
+    {
+      "tag": "P07",
+      "en": "**Q1 / Q3.** The risk of substituting the caller for the named steward is a useful behavioural argument for `AUTH_REQUIRED`. As clarified earlier, an unaware client encountering a required but unactivated extension should receive `ExtensionSupportRequiredError`; it should not enter the sanction flow. The case for `required: true` rests on the client's obligation to follow that flow.",
+      "flags": [
+        {
+          "level": "medium",
+          "text": "建议/允许语气：建议（should）(should) / 建议不（should not）(should not) / 建议（should）(should)"
+        },
+        {
+          "level": "low",
+          "text": "否定词 1 处"
+        },
+        {
+          "level": "medium",
+          "text": "代码/字段名（原样保留）：AUTH_REQUIRED、ExtensionSupportRequiredError、required: true"
+        },
+        {
+          "level": "medium",
+          "text": "未入术语库（译法可能漂移）：extension"
+        }
+      ]
+    },
+    {
+      "tag": "P08",
+      "en": "On sharing code: thank you for offering. For now, please hold off on sending the implementation or test suite. Short, implementation-independent cases as issues in [math-r-association/sanction-gate](https://github.com/math-r-association/sanction-gate/issues) would be the most useful next step: inputs and preconditions, the event sequence, expected dispatch/effect counts, and the records that should remain after restart or failure. That gives us a common basis for reviewing the text without depending on either implementation.",
+      "flags": [
+        {
+          "level": "medium",
+          "text": "建议/允许语气：建议（should）(should)"
+        },
+        {
+          "level": "low",
+          "text": "否定词 1 处"
+        }
+      ]
+    },
+    {
+      "tag": "P10",
+      "en": "Thanks @sunwindy91 for writing up the three cases and for holding off on the code. Together with @gomission's recovery case, they give us concrete scenarios to discuss:",
+      "flags": [
+        {
+          "level": "medium",
+          "text": "数字/计数：three（逐字核对）"
+        },
+        {
+          "level": "medium",
+          "text": "未入术语库（译法可能漂移）：recovery"
+        }
+      ]
+    },
+    {
+      "tag": "P11",
+      "en": "- [#4](https://github.com/math-r-association/sanction-gate/issues/4): recovery after a lost acknowledgement or outcome record;\n- [#5](https://github.com/math-r-association/sanction-gate/issues/5): classification evasion and content-only false positives;\n- [#6](https://github.com/math-r-association/sanction-gate/issues/6): enforcement missing from the execution path;\n- [#7](https://github.com/math-r-association/sanction-gate/issues/7): expiry and reuse of an allowance by an unrelated action.",
+      "flags": [
+        {
+          "level": "medium",
+          "text": "数字/计数：（逐字核对）"
+        },
+        {
+          "level": "medium",
+          "text": "未入术语库（译法可能漂移）：recovery"
+        }
+      ]
+    },
+    {
+      "tag": "P12",
+      "en": "These remain proposed test scenarios for a possible future revision, not accepted requirements or conformance results. There is no reference implementation, and I can't commit to a revision timeline. Let's keep the detailed discussion in those issues: what counts as a content operation, how to distinguish activation failure from an enforcement bypass, and how expiry should constrain recovery. Thank you both for making the gaps easier to examine.",
+      "flags": [
+        {
+          "level": "medium",
+          "text": "建议/允许语气：能力（can）(can) / 建议（should）(should)"
+        },
+        {
+          "level": "high",
+          "text": "否定词 2 处 —— 作用域易被机翻搬动（not A and B ≠ not (A and B)）"
+        },
+        {
+          "level": "medium",
+          "text": "未入术语库（译法可能漂移）：recovery"
+        }
+      ]
+    },
+    {
+      "tag": "P14",
+      "en": "Thanks, @sunwindy91 — the revisions to #5, #6 and #7 match the points we raised. We will read the updated issues and comment there if anything is still unclear. As before, these remain proposed test scenarios: the published binding is unchanged, there is no reference implementation, and we cannot commit to a timeline.",
+      "flags": [
+        {
+          "level": "high",
+          "text": "否定词 2 处 —— 作用域易被机翻搬动（not A and B ≠ not (A and B)）"
+        },
+        {
+          "level": "medium",
+          "text": "数字/计数：（逐字核对）"
+        }
+      ]
+    }
+  ],
+  "counts": {
+    "high": 8,
+    "medium": 29,
+    "low": 4
+  }
+}

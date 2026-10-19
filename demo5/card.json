@@ -1,0 +1,18 @@
+{
+  "msg_type": "interactive",
+  "card": {
+    "header": {
+      "title": {
+        "tag": "plain_text",
+        "content": "审阅待确认 · a2aproject/A2A#2250"
+      },
+      "template": "blue"
+    },
+    "elements": [
+      {
+        "tag": "markdown",
+        "content": "**[Extension Proposal] Sanction Gate — bounded human authorisation for irreversible actions**\n\n段落 15 · **高风险 8** · 中 29 · 低 4\n\n- `[P01]` 否定词 2 处 —— 作用域易被机翻搬动（not A and B ≠ not (A and B)）\n- `[P02]` 否定词 2 处 —— 作用域易被机翻搬动（not A and B ≠ not (A and B)）\n- `[P04]` 强制/禁止语气：强制（MUST）(MUST) / 禁止（MUST NOT）(MUST NOT) / 强制（MUST）(MUST) / 禁止（MUST NOT）(MUST NOT) —— 中文必须对应为 必须/不得，不可降级为『应当/可以』；\n- `[P05]` 否定词 3 处 —— 作用域易被机翻搬动（not A and B ≠ not (A and B)）\n- `[P12]` 否定词 2 处 —— 作用域易被机翻搬动（not A and B ≠ not (A and B)）\n- `[P14]` 否定词 2 处 —— 作用域易被机翻搬动（not A and B ≠ not (A and B)）\n\n[在原帖查看](https://github.com/a2aproject/A2A/issues/2250)\n\n_风险未确认前不要回帖（回帖不可逆）。_"
+      }
+    ]
+  }
+}

@@ -161,7 +161,7 @@ def paragraphs(text: str):
     return [p for p in out if p.strip()]
 
 
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 
 
 def flags_of(para: str, glossary: dict):
@@ -352,7 +352,10 @@ def main(argv=None) -> int:
 
     if a.format == "json":
         payload = {"tool": "oss-review-translate", "version": VERSION, "repo": a.repo, "number": a.number,
-                   "url": thread["url"], "title": thread["title"], "paragraphs": [
+                   "url": thread["url"], "title": thread["title"],
+                   # 总量与"有风险的段落"是两个数：下游（卡片/看板）必须能分开显示
+                   "total_paragraphs": idx,
+                   "paragraphs": [
                        {"tag": tag, "en": p, "flags": [{"level": l, "text": t} for l, t in fl]}
                        for tag, p, fl in risky],
                    "counts": {"high": high_n, "medium": mid_n, "low": low_n}}

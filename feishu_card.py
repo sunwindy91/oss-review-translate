@@ -19,10 +19,14 @@ import sys
 def build_card(summary: dict) -> dict:
     c = summary.get("counts", {})
     title = f"审阅待确认 · {summary.get('repo', '?')}#{summary.get('number', '?')}"
+    title_text = summary.get("title", "")
+    if len(title_text) > 90:
+        title_text = title_text[:90].rsplit(" ", 1)[0] + "…"
     lines = [
-        f"**{summary.get('title', '')[:80]}**",
+        f"**{title_text}**",
         "",
-        f"段落 {len(summary.get('paragraphs', []))} · "
+        # 总数优先用 total_paragraphs（有风险的段落只是其中一个子集）
+        f"段落 {summary.get('total_paragraphs', len(summary.get('paragraphs', [])))} · "
         f"**高风险 {c.get('high', 0)}** · 中 {c.get('medium', 0)} · 低 {c.get('low', 0)}",
         "",
     ]
