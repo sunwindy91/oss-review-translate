@@ -82,5 +82,61 @@
   "hold off": {
     "zh": "暂缓（先不要做）",
     "note": "不是'拒绝'：礼貌地要求延后"
+  },
+  "classBasis": {
+    "zh": "类别判定依据（字段）",
+    "note": "示例里只是个规则标签；应当可复核"
+  },
+  "content operation": {
+    "zh": "内容操作",
+    "note": "写成文件/生成文本这类本地操作；不等于'执行危险动作'，也不等于普遍豁免"
+  },
+  "consequential action": {
+    "zh": "有后果的动作",
+    "note": "会产生对外/不可逆效果的动作；与内容操作相对"
+  },
+  "activation failure": {
+    "zh": "激活失败",
+    "note": "扩展声明 required:true 但客户端未请求激活 → §5 ExtensionSupportRequiredError；是拒绝，不是执行"
+  },
+  "enforcement bypass": {
+    "zh": "执法绕过",
+    "note": "闸门不在执行路径上却仍发生了动作；与'管家拒绝'完全不同"
+  },
+  "reconciliation": {
+    "zh": "对账（核对原始尝试的结果）",
+    "note": "不确定结果时先对账，不得改写为 refused/open"
+  },
+  "proposal binding": {
+    "zh": "提案绑定",
+    "note": "一条批准绑定到一个确切的 proposalHash；B 不得消费 A 的额度"
+  },
+  "fresh sanction": {
+    "zh": "新的有效批准",
+    "note": "过期/已用的额度不能续命；新的尝试要新批准"
+  },
+  "single-use": {
+    "zh": "单次使用",
+    "note": "一次受理=一次派发；有效期只约束时间，不增加次数"
+  },
+  "spendable authority": {
+    "zh": "可支配授权",
+    "note": "unused but expired, with no remaining spendable authority = 未使用但已过期、无可支配授权"
+  },
+  "conformance result": {
+    "zh": "一致性结果",
+    "note": "与'测试场景/提案'区分：我们提交的是场景，不是一致性结论"
+  },
+  "test scenario": {
+    "zh": "测试场景",
+    "note": "输入+序列+期望观测；不含实现"
+  },
+  "dispatch admission": {
+    "zh": "派发受理时点",
+    "note": "受理即占额；丢失确认不得使授权复原"
+  },
+  "durable claim": {
+    "zh": "持久占用",
+    "note": "额度必须在派发之前持久占用，而不是确认效果后才消费"
   }
 }

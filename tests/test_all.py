@@ -52,7 +52,7 @@ FIXTURE = {
                  "Do not rewrite the decision as refused or open, and do not invent a timestamp.\n\n"
                  "There must be exactly one dispatch and zero additional effects.\n\n"
                  "Fields `validUntil` and `effectNotBefore` are set; see §10.\n\n"
-                 "Reconciliation of the original attempt is required before any new decision."},
+                 "Reconciliation of the original attempt is required before any new decision, or the steward may revoke it."},
         {"author": {"login": "me"}, "createdAt": "2026-10-16T00:00:00Z",
          "body": "MYOWNREPLY should be filtered out by --exclude-author."},
     ],
@@ -92,7 +92,7 @@ def main():
 
         terms = read(os.path.join(out, "terms.md"))
         check("`dispatch`" in terms and "派发" in terms, "术语表应命中 glossary 的 dispatch→派发")
-        check("reconciliation" in terms and "（未入库）" in terms, "术语表应列出未入库术语（reconciliation）")
+        check("revoke" in terms and "（未入库）" in terms, "术语表应列出未入库术语（revoke）")
 
         conf = read(os.path.join(out, "confirm.md"))
         check("Did I understand" in conf or "I want to make sure" in conf, "确认稿应含确认问句")
