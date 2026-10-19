@@ -134,6 +134,36 @@ def main():
         check(bad.returncode != 0, "缺失 --from-json 文件时应非零退出")
         noargs = run(["--skip-op"], tmp)
         check(noargs.returncode != 0, "既无 repo/number 也无 from-json 时应非零退出")
+
+        # ---- v0.2.1：--fail-on-high 与飞书卡片 ----
+        fx2 = os.path.join(tmp, "high.json")
+        with open(fx2, "w", encoding="utf-8") as fh:
+            json.dump({"title": "T", "body": "", "state": "OPEN", "url": "https://github.com/a/b/issues/9",
+                       "comments": [{"author": {"login": "bob"}, "createdAt": "2026-10-15T00:00:00Z",
+                                     "body": "The host MUST NOT restore it."}]}, fh)
+        out4 = os.path.join(tmp, "out4")
+        r4 = run(["--from-json", fx2, "--skip-op", "--out", out4, "--fail-on-high"], tmp)
+        check(r4.returncode == 3, "--fail-on-high 应返回 3，实际 %d" % r4.returncode)
+        check(os.path.exists(os.path.join(out4, "bilingual.md")), "返回 3 时产物仍应生成")
+
+        out5 = os.path.join(tmp, "out5")
+        r5 = run(["--from-json", fx2, "--skip-op", "--out", out5, "--fail-on-high", "--all-flags"], tmp)
+        check(r5.returncode == 3, "带 --all-flags 时仍应返回 3")
+
+        # 卡片：只用 summary.json 生成，不发送
+        summary_path = os.path.join(tmp, "s.json")
+        with open(summary_path, "w", encoding="utf-8") as fh:
+            json.dump({"repo": "a/b", "number": 3, "title": "T", "url": "https://x/y",
+                       "counts": {"high": 1, "medium": 0, "low": 0},
+                       "paragraphs": [{"tag": "P01", "en": "x", "flags": [{"level": "high", "text": "MUST NOT"}]}]}, fh)
+        card_path = os.path.join(tmp, "card.json")
+        rc = subprocess.run([sys.executable, os.path.join(ROOT, "feishu_card.py"), summary_path, "--out", card_path],
+                            capture_output=True, text=True, encoding="utf-8")
+        check(rc.returncode == 0, "feishu_card 应成功：" + (rc.stderr or "")[:150])
+        card = json.loads(io_open(card_path))
+        check(card["msg_type"] == "interactive", "卡片应为 interactive")
+        check("P01" in json.dumps(card, ensure_ascii=False), "卡片应含高风险段落编号")
+
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 

@@ -161,7 +161,7 @@ def paragraphs(text: str):
     return [p for p in out if p.strip()]
 
 
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 
 
 def flags_of(para: str, glossary: dict):
@@ -223,6 +223,8 @@ def main(argv=None) -> int:
     ap.add_argument("--all-flags", action="store_true", help="显示全部风险（默认只显示 high 级）")
     ap.add_argument("--format", default="md", choices=["md", "json"], help="md（默认）或 json（给自动化/飞书用）")
     ap.add_argument("--version", action="version", version="oss-review-translate " + VERSION)
+    ap.add_argument("--fail-on-high", action="store_true",
+                    help="存在 high 级风险时以退出码 3 结束（供 CI/脚本拦下『高风险尚未确认』）")
     ap.add_argument("--save-json", default=None, help="把读到的线程原样存为 JSON（审计可复现）")
     ap.add_argument("--since", default=None, help="只取此时间之后的评论（ISO，如 2026-10-14）")
     ap.add_argument("--skip-op", action="store_true", help="不翻译 issue/PR 正文，只看评论（配合 --since 用）")
@@ -366,6 +368,9 @@ def main(argv=None) -> int:
         fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
     print(f"段落 {idx} 个 · 风险 high {high_n} / mid {mid_n} / low {low_n} · 术语候选 {len(g)} 个 → {a.out}/")
+    if a.fail_on_high and high_n > 0:
+        print(f"  --fail-on-high：存在 {high_n} 条高风险，退出码 3（请先在 reply.md 里逐条写下你的理解再回帖）")
+        return 3
     print("  产物：bilingual.md / terms.md / confirm.md / reply.md / audit.jsonl"
           + (" / summary.json" if a.format == "json" else ""))
     return 0

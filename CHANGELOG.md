@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.1 — 2026-10-20
+
+### Added
+- **`--fail-on-high`**：存在 high 级风险时以**退出码 3** 结束（产物照常生成）。
+  用途：CI/脚本可以拦下"高风险还没在 `reply.md` 里逐条写下理解"的情况——把"读清楚"变成可执行的约束，
+  而不是靠自律。
+- **`feishu_card.py`**：把 `summary.json` 变成飞书交互卡片 JSON，并打印一条可粘贴的命令。
+  **刻意不自动发送**：群消息是对外不可逆动作（本项目一贯立场：阅读可以自动化，表态不行）。
+- **`README.en.md`**：英文版（面向国际读者/潜在协作者）；中文 README 顶部加互链。
+
+### Changed
+- 版本 0.2.1（`--version` / `pyproject.toml` 同步）。
+
+### Verified
+- `tests/test_flags.py` → OK；`tests/test_all.py` → ALL_OK（新增 5 条断言：fail-on-high 返回 3、带 artifacts、
+  无 high 时返回 0、卡片为 interactive、卡片含高风险段落编号）。
+
 ## 0.2.0 — 2026-10-19
 
 从第一性原理重做输出：**交付物不是"译文"，而是"一条你愿意发出去的回复"**。
